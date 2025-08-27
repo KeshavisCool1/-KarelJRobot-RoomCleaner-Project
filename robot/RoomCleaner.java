@@ -9,8 +9,42 @@ public class RoomCleaner implements Directions{
 
         World.setVisible(true);// allows us to see the run output
         // the bigger the street, the farther north
+        Robot rob = new Robot(11,6,South,0);
         World.setSize(20,20);
-        Robot rob = new Robot(15,2,South,9);
+        
+        while (true){
+            
+
+            if (rob.nextToABeeper() == true){
+
+                rob.pickBeeper();
+            }
+
+            if (rob.frontIsClear() == false && rob.facingSouth()) {
+
+                rob.turnLeft();
+                rob.move();
+                rob.turnLeft();
+            }
+            if (rob.frontIsClear() == false && rob.facingNorth()) {
+
+                rob.turnLeft();
+                rob.turnLeft();
+                rob.turnLeft();
+                rob.move();
+                rob.turnLeft();
+                rob.turnLeft();
+                rob.turnLeft();
+            }
+            if (rob.frontIsClear() == true){
+
+                rob.move();
+
+            }
+
+
+        }
+
 
         
 
