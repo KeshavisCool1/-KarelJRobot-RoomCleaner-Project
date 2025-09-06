@@ -2,17 +2,40 @@ package robot;
 import org.omg.CORBA.INTERNAL;
 
 import kareltherobot.*;
+
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Scanner;
+
+import javax.swing.plaf.synth.SynthStyle;
+
 
 public class RoomCleaner implements Directions{
 
     public static void main(String[] args) {
-        World.readWorld("basicRoom.wld");
+
+
+
         World.setVisible(true);
         // user input define
-        // for world 1 start is y=11 and x=6
+        // for world basic start is y=11 and x=6
+        // test-1 x=11 and y = 52
+        // test-2 x=6 y=27
+        // final x= 101 y =199
         Scanner scanner = new Scanner(System.in);
         Scanner reader = new Scanner(System.in);
+        System.out.println("Enter the world file name: ");
+        String world = scanner.nextLine();
+        File filename = new File(world);
+        if (filename.exists()){
+            World.readWorld(world);
+        } else {
+            System.out.println("Invalid world file entered. Defaulting to basicRoom.wld.");
+                world = "basicRoom.wld";
+                World.readWorld(world);
+        }
+        
+
         System.out.println("Enter the start x value: ");
         int x = scanner.nextInt();
         System.out.println("Enter the start y value: ");
@@ -46,8 +69,11 @@ public class RoomCleaner implements Directions{
         
         scanner.close();
         reader.close();
-        int x_start = x;
-        int y_start = y;
+        
+        ArrayList <Integer> beeperslist =  new ArrayList<>();
+        ArrayList<Integer> streets =  new ArrayList<>();
+        ArrayList<Integer> avenues =  new ArrayList<>();
+        
         int total_num_beepers = 0;
         
         // int pass = 0;
@@ -55,41 +81,95 @@ public class RoomCleaner implements Directions{
         // the bigger the street, the farther north
         Robot stop = new Robot(y,x,startDirection,0);
         Robot rob = new Robot(y,x,startDirection,total_num_beepers);
-
-
-        World.setSize(20,20);
+        int y_ = 0;
+        World.setDelay(1);
+        World.setSize(200,200);
         stop.turnLeft();
         while (stop.frontIsClear() == true){
             stop.move();
         }
 
-        if (rob.nextToABeeper() == true){
-            while (rob.nextToABeeper() == true) {
-                rob.pickBeeper();
-                total_num_beepers = total_num_beepers +1;
-            }
+        stop.turnLeft();
+        stop.turnLeft();
+        stop.turnLeft();
+        // finding the width
+        while (stop.frontIsClear()== true) {
+            stop.move();
+            y_ = y_ +1;
             
         }
+        stop.turnLeft();
+        stop.turnLeft();
+
+        for (int i = 0;i<y_;i++){
+            stop.move();
+        }
+
+        // end of width find
+
+        
         while (true){
 
+
             if (rob.nextToABeeper() == true){
+                int beepers_count = 0;
                 while (rob.nextToABeeper() == true) {
                     rob.pickBeeper();
                     total_num_beepers = total_num_beepers +1;
+                    beepers_count = beepers_count + 1;
                 }
-                
+                if (beepers_count > 0){
+                    beeperslist.add(beepers_count);
+                    streets.add(rob.street());
+                    avenues.add(rob.avenue());
+                }
             }
 
+
+            if (rob.frontIsClear() == true){
+            
+                rob.move();
+                if (rob.nextToABeeper() == true){
+                    continue;
+                }
+            }
+
+            
             if (rob.nextToARobot() == true){
                 rob.turnOff();
-                System.out.println("total number of beepers is " + total_num_beepers);
                 
-                // int length = x - x_start;
-                // int width = y-y_start;
-                // System.out.println("Area of room:" + length * width);
+                int length = rob.avenue() - x + 1;
+                int width = y_ + 1;
+
+                
+                // finding piles and location
+                int size = beeperslist.size();
+                
+                int count = 0;
+                for (int index = 0; index<size; index++){
+                    count = count + beeperslist.get(index);
+                }
+                int lastIndex = 0;
+                int max = 0;
+                for (int index = 0; index < beeperslist.size(); index++){
+                    if (max < beeperslist.get(index)){
+                        max = beeperslist.get(index);
+                        lastIndex = index;
+                    }
+                }
+                
+
+                System.out.println("The area is " + length * width + " square units");
+                System.out.println("The total number of piles: " + size);
+                System.out.println("The total number of beepers is " + total_num_beepers);
+                System.out.println("The largest pile of beepers has " + max + " beepers");
+                System.out.println("The largest pile (From top left corner) is right " + Math.abs(x - avenues.get(lastIndex)) + " and down "+ Math.abs(y - streets.get(lastIndex)));
+               
+                System.out.println("The average pile size is " + (double)count/size );
+                System.out.println("The percent dirty is " + (double)size/(length * width));
+                
                 break;
             }
-
 
 
             if (rob.frontIsClear() == false && rob.facingSouth()) {
@@ -102,16 +182,24 @@ public class RoomCleaner implements Directions{
                     }
                     rob.turnLeft();
                 }
+
+                
                 rob.move();
+                int beepers_count = 0;
                 while (rob.nextToABeeper() == true) {
                     rob.pickBeeper();
                     total_num_beepers = total_num_beepers +1;
+                    beepers_count = beepers_count + 1;
                 }
+                if (beepers_count > 0){
+                    beeperslist.add(beepers_count);
+                    streets.add(rob.street());
+                    avenues.add(rob.avenue());
+                }
+                
                 rob.turnLeft();
                 
             }
-
-
 
             if (rob.frontIsClear() == false && rob.facingNorth()) {
 
@@ -120,32 +208,24 @@ public class RoomCleaner implements Directions{
                 rob.turnLeft();
                 
                 rob.move();
+                int beepers_count = 0;
                 while (rob.nextToABeeper() == true) {
                     rob.pickBeeper();
                     total_num_beepers = total_num_beepers +1;
+                    beepers_count = beepers_count + 1;
+                }
+                if (beepers_count > 0){
+                    beeperslist.add(beepers_count);
+                    streets.add(rob.street());
+                    avenues.add(rob.avenue());
                 }
                 rob.turnLeft();
                 rob.turnLeft();
                 rob.turnLeft();
             }
-
-
-
-            else if (rob.frontIsClear() == true){
-            
-                rob.move();
-
-            }
-        
-        
         }
 
         // Main while ended above   
 
-        
-        
     }
-
-
-    
 }
